@@ -130,9 +130,187 @@ cd MobilePlantViT-LDA
 pip install torch torchvision numpy matplotlib pillow tqdm scikit-learn
 ```
 
-<!-- need to add more -->
 
-<!-- 👇last part added already -->
+### Basic Usage
+
+```python
+from src.models import MobilePlantViT, MobilePlantViTConfig
+
+# Create model with default configuration
+model = MobilePlantViT(num_classes=38)
+
+# Or use a specific variant
+from src.models import mobileplant_vit_base, mobileplant_vit_tiny
+
+model = mobileplant_vit_base(num_classes=38)  # ~867K params
+model = mobileplant_vit_tiny(num_classes=38)  # ~220K params
+
+# Forward pass
+import torch
+x = torch.randn(1, 3, 224, 224)
+output = model(x)  # Returns probabilities
+logits = model.get_logits(x)  # Returns raw logits for CrossEntropyLoss
+```
+
+
+### Custom Configuration
+
+```python
+from src.models import MobilePlantViT, MobilePlantViTConfig
+
+config = MobilePlantViTConfig(
+    img_size=224,
+    num_classes=38,
+    ghost_out_channels=64,
+    fused_ir_out_channels=64,
+    embed_dim=256,
+    num_heads=8,
+    lda_dropout=0.1,
+    ffn_bottleneck_ratio=0.25,
+)
+
+model = MobilePlantViT(config)
+print(f"Parameters: {model.count_parameters():,}")
+```
+
+
+---
+
+## 📦 Building Blocks
+
+### GhostConv
+
+Efficient convolution using ghost features to reduce computation:
+
+```python
+from src.blocks import GhostConv
+
+ghost = GhostConv(inp=64, oup=128, kernel_size=1, ratio=2)
+```
+
+
+### Coordinate Attention
+
+Position-aware channel attention mechanism:
+
+```python
+from src.blocks import CoordAtt
+
+coord_att = CoordAtt(inp=64, oup=64, reduction=32)
+```
+
+
+### Linear Differential Attention
+
+The core attention mechanism:
+
+```python
+from src.blocks import LinearDifferentialAttention
+
+lda = LinearDifferentialAttention(embed_dim=256, num_heads=8, dropout=0.1)
+```
+
+
+---
+
+## 🔧 Training
+
+### Data Preprocessing
+
+The preprocessing pipeline handles:
+- Dataset verification and corruption detection
+- Duplicate image detection using perceptual hashing
+- Class name harmonization
+- Train/Val/Test splitting (70/15/15)
+- Class imbalance analysis
+
+Run the preprocessing notebook:
+
+```bash
+jupyter notebook preprocessing/preprocessing_color.ipynb
+```
+
+
+### Training Pipeline
+
+The training notebook includes:
+- Data augmentation (rotation, flip, color jitter, perspective)
+- Mixed precision training (AMP)
+- Cosine warmup learning rate schedule
+- Gradient clipping for transformer stability
+- Early stopping
+- Comprehensive logging and visualization
+
+Key training configurations:
+
+```python
+TRAINING_CONFIG = {
+    'num_epochs': 50,
+    'batch_size': 64,
+    'optimizer': 'adamw',
+    'learning_rate': 2e-4,
+    'weight_decay': 0.01,
+    'scheduler': 'cosine_warmup',
+    'warmup_epochs': 3,
+    'gradient_clip_max_norm': 1.0,
+    'use_mixed_precision': True,
+}
+```
+
+
+---
+
+## 📈 Results
+
+### Performance Metrics
+
+| Metric | Value |
+|--------|-------|
+| Test Accuracy | 95%+ |
+| Top-3 Accuracy | 99%+ |
+| Top-5 Accuracy | 99.5%+ |
+| Parameters | <5M (all variants) |
+| Inference Time | <10ms/image (GPU) |
+
+### Comparison with Baseline
+
+| Model | Parameters | Accuracy | Size (MB) |
+|-------|------------|----------|-----------|
+| MobileNetV2 | 3.5M | ~96% | 13.5 |
+| **MobilePlantViT-Base** | 867K | ~95% | 3.3 |
+| **MobilePlantViT-Tiny** | 220K | ~93% | 0.9 |
+
+---
+
+## 📤 Model Export
+
+The trained model can be exported in multiple formats:
+
+### PyTorch Checkpoint
+```python
+torch.save({
+    'model_state_dict': model.state_dict(),
+    'model_config': model.get_config(),
+}, 'model.pth')
+```
+
+
+### TorchScript
+```python
+traced_model = torch.jit.trace(model, sample_input)
+traced_model.save('model_traced.pt')
+```
+
+
+### ONNX
+```python
+torch.onnx.export(model, sample_input, 'model.onnx',
+                  input_names=['input'],
+                  output_names=['output'],
+                  dynamic_axes={'input': {0: 'batch_size'}})
+```
+
+
 ---
 
 ## 🔬 Technical Details
