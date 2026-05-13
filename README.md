@@ -1,97 +1,97 @@
-# MobilePlantViT-LDA
+# MobilePlantViT-LDA: A Lightweight Hybrid CNN-Transformer Model for Plant Leaf Disease Detection 🌿
 
-A Lightweight Hybrid CNN-Transformer Architecture for Plant Disease Classification with Linear Differential Attention
+A Lightweight Hybrid CNN-Transformer Architecture for Plant Disease Classification featuring **Linear Differential Attention (LDA)**.
+
+[![Paper](https://img.shields.io/badge/Paper-MobilePlantViT--LDA.pdf-blue.svg)](./MobilePlantViT-LDA.pdf)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-green.svg)
+[![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
+[![Web App](https://img.shields.io/badge/Web_Interface-Coming_Soon-orange.svg)]()
 
 ---
 
-## 🌿 Overview
+## 📄 Publication
 
-**MobilePlantViT-LDA** is a novel lightweight deep learning architecture designed for efficient plant disease classification on mobile and edge devices. It combines the local feature extraction capabilities of MobileNet-inspired CNNs with the global context understanding of Vision Transformers (ViT), featuring a custom **Linear Differential Attention (LDA)** mechanism for improved noise cancellation and feature extraction.
+This work was published in:
 
-### Key Features
+**6th International Conference on Computer Networks and Inventive Communication Technologies (ICCNCT 2026), IEEE**
 
-- **Hybrid Architecture**: Combines efficient CNN backbone with transformer attention
-- **Linear Differential Attention**: Novel attention mechanism that computes the difference between two attention maps for noise cancellation
-- **Mobile-First Design**: Optimized for deployment on resource-constrained devices (<5M parameters)
-- **Multiple Variants**: Tiny (~220K), Small (~490K), Base (~867K), and Large (~1.9M) parameter configurations
-- **Comprehensive Pipeline**: End-to-end training, evaluation, and deployment workflow
+Paper title:  
+*MobilePlantViT-LDA: A Lightweight Hybrid CNN-Transformer Model for Plant Leaf Disease Detection*
+
+DOI: *To be updated after IEEE Xplore indexing*
+
+---
+
+## 📖 Overview
+
+**MobilePlantViT-LDA** is a novel, mobile-first deep learning architecture designed for highly accurate and efficient plant disease classification on edge devices. It seamlessly combines the local feature generation efficiency of CNNs (via Ghost Convolutions) with the global context understanding of Vision Transformers (ViT). 
+
+The standout contribution of this architecture is the **Linear Differential Attention (LDA)** mechanism, which computes the difference between two attention maps to cancel out background noise (like background soil or shadows) and highlight meaningful disease patterns.
+
+### ✨ Key Contributions
+
+- **Hybrid Architecture**: Combines efficient CNN backbone with transformer attention.
+- **Linear Differential Attention (LDA)**: Integrates Linear Differential Attention (LDA) into a lightweight hybrid CNN-Transformer architecture for efficient plant disease classification.
+- **Mobile-First Efficiency**: Achieves high classification accuracy with low parameter (< 5M) count and fast inference suitable for mobile deployment.
+- **Multiple Variants**: Tiny (~220K), Small (~490K), Base (~867K), and Large (~1.9M) parameter configurations.
+- **Robust Preprocessing Pipeline**: Advanced dataset harmonization, pHash-based duplicate removal, and class-imbalance correction (Weighted Sampling/oversampling).
+- **Comprehensive Pipeline**: End-to-end training, evaluation, and deployment workflow.
 
 ---
 
 ## 🏗️ Architecture
 
-```markdown
-Input (224×224×3)
-       │
-       ▼ CNN Stage
-┌──────────────────┐
-│    GhostConv     │  → Efficient feature generation with ghost features
-├──────────────────┤
-│   Fused-IR Block │  → Fused inverted residual for spatial processing
-├──────────────────┤
-│ Coordinate Attn  │  → Position-aware channel attention
-└──────────────────┘
-       │
-       ▼ Transition Stage
-┌──────────────────┐
-│  Patch Embedding │  → Convert spatial features to sequence
-├──────────────────┤
-│ Positional Enc.  │  → Add position information
-└──────────────────┘
-       │
-       ▼ Transformer Stage
-┌──────────────────┐
-│       LDA        │  → Linear Differential Attention
-├──────────────────┤
-│   Residual LN    │  → LayerNorm with skip connection
-├──────────────────┤
-│  Bottleneck FFN  │  → Parameter-efficient feed-forward
-└──────────────────┘
-       │
-       ▼ Classifier Stage
-┌──────────────────┐
-│       GAP        │  → Global Average Pooling
-├──────────────────┤
-│  Classifier Head │  → Final classification
-└──────────────────┘
-       │
-       ▼
-Output (38 classes)
-```
+![Architecture Diagram](./results/architecture.png)
 
-
-
-### Linear Differential Attention (LDA)
-
-The core innovation of this architecture is the **Linear Differential Attention** mechanism:
-
-```markdown
-A_diff = α × (softmax(Q₁K₁ᵀ) - softmax(Q₂K₂ᵀ))
-```
-
-
-
-This differential approach:
-- Cancels out noise common to both attention maps
-- Enhances meaningful patterns that differ between maps
-- Provides learnable noise cancellation via the α parameter
+The network is composed of three primary stages:
+1. **Feature Extraction (CNN Stage)**: Utilizes **GhostConv** stem layers for cheap feature generation, followed by **Fused-Inverted Residual Blocks** and **Coordinate Attention** to capture precise spatial and channel-wise positional information.
+2. **Transformer Core (Attention Stage)**: Patches are passed into the **Linear Differential Attention** block. Unlike standard self-attention, LDA computes: `A_diff = α × (softmax(Q₁K₁ᵀ) - softmax(Q₂K₂ᵀ))`, canceling irrelevant noise. This is followed by a stateless **Residual LayerNorm** and a **Bottleneck Feed-Forward Network**.
+3. **Classification Head**: Applies **Global Average Pooling (GAP)** over the sequence dimension, followed by a 2-layer MLP classification head outputting probabilities for 38 disease classes.
 
 ---
 
-## 📊 Model Variants
+## 📊 Performance & Results
 
-| Variant | Parameters | embed_dim | num_heads | Use Case |
-|---------|------------|-----------|-----------|----------|
-| **Tiny** | ~220K | 128 | 4 | Edge devices, IoT, real-time inference |
-| **Small** | ~490K | 192 | 6 | Mobile apps, balanced performance |
-| **Base** | ~867K | 256 | 8 | Default choice, best accuracy/size trade-off |
-| **Large** | ~1.9M | 384 | 12 | Maximum accuracy, server deployment |
+MobilePlantViT-LDA was trained and evaluated on the PlantVillage dataset (38 classes). The model significantly outperforms traditional mobile architectures.
+
+### MobilePlantViT-Large vs MobileNetV2
+| Metric | MobilePlantViT-Large | MobileNetV2 | Improvement |
+|--------|-----------------------|-------------|-------------|
+| **Accuracy (Top-1)** | **~97.48%** | ~96.00% | ✅ +1.48% |
+| **Parameters** | **1.94M** | 3.54M | ✅ 45% Smaller |
+| **Inference Latency** | **1.05 ms** | 8.50 ms | ✅ 8x Faster |
+
+### Training Progress & Evaluation
+The model employs Automatic Mixed Precision (AMP), Cosine Annealing, and heavy augmentations (ColorJitter, RandomAffine, RandomPerspective). 
+
+<div align="center">
+  <img src="./results/training_curves.png" width="48%" />
+  <img src="./results/confusion_matrix.png" width="48%" />
+</div>
 
 ---
 
-## 📁 Project Structure
+## 🔁 Reproducibility
 
-```markdown
+The experiments were conducted under the following configuration:
+
+| Component | Details |
+|---|---|
+| Random Seed | 42 |
+| Framework | PyTorch 2.6.0 + CUDA 12.4 |
+| GPU | Tesla P100-PCIE-16GB |
+| Dataset | PlantVillage (49,370 refined images) |
+| Input Resolution | 224 × 224 |
+| Optimizer | AdamW |
+| Initial Learning Rate | 2e-4 |
+
+---
+
+## 🗂️ Project Structure
+
+```text
 MobilePlantViT-LDA/
 ├── src/
 │   ├── __init__.py
@@ -113,45 +113,50 @@ MobilePlantViT-LDA/
 │   └── preprocessing_color.ipynb  # Data preprocessing pipeline
 ├── training/
 │   └── training-color-mobileplantvit-large.ipynb  # Training notebook
-└── README.md
+├── README.md                      # Project Documentation
+└── MobilePlantViT-LDA.pdf         # Final Published Research Paper
 ```
-
-
 
 ---
 
-## 🚀 Quick Start
+## 💻 Installation & Quick Start
 
-### Installation
+### Prerequisites
+- Python 3.8+
+- PyTorch 2.0+
+- CUDA-enabled GPU (Highly Recommended for training)
 
+### Setup
 ```bash
-git clone https://github.com/yourusername/MobilePlantViT-LDA.git
+# Clone the repository
+git clone https://github.com/SCSBalaji/MobilePlantViT-LDA.git
 cd MobilePlantViT-LDA
-pip install torch torchvision numpy matplotlib pillow tqdm scikit-learn
+
+# Install required dependencies
+pip install torch torchvision numpy matplotlib pillow tqdm
 ```
 
-
-### Basic Usage
-
+### Running Inference
 ```python
-from src.models import MobilePlantViT, MobilePlantViTConfig
-
-# Create model with default configuration
-model = MobilePlantViT(num_classes=38)
-
-# Or use a specific variant
-from src.models import mobileplant_vit_base, mobileplant_vit_tiny
-
-model = mobileplant_vit_base(num_classes=38)  # ~867K params
-model = mobileplant_vit_tiny(num_classes=38)  # ~220K params
-
-# Forward pass
 import torch
-x = torch.randn(1, 3, 224, 224)
-output = model(x)  # Returns probabilities
-logits = model.get_logits(x)  # Returns raw logits for CrossEntropyLoss
-```
+from src.models import mobileplant_vit_large
 
+# 1. Initialize the model (38 classes for PlantVillage)
+model = mobileplant_vit_large(num_classes=38)
+
+# 2. Load trained weights (Ensure weights are downloaded to the root)
+weights_path = "MobilePlantViT-Large_best.pth"
+model.load_state_dict(torch.load(weights_path, map_location="cpu"))
+model.eval()
+
+# 3. Perform inference
+dummy_input = torch.randn(1, 3, 224, 224) # Standard input size
+with torch.no_grad():
+    logits = model(dummy_input)
+    predictions = torch.nn.functional.softmax(logits, dim=1)
+    
+print(f"Predicted class index: {torch.argmax(predictions).item()}")
+```
 
 ### Custom Configuration
 
@@ -173,50 +178,49 @@ model = MobilePlantViT(config)
 print(f"Parameters: {model.count_parameters():,}")
 ```
 
+---
+
+## ⚙️ Model Variants
+
+MobilePlantViT is highly configurable to suit different hardware constraints:
+
+| Variant | Parameters | Embed Dim | Heads | Target Hardware |
+|---------|------------|-----------|-------|-----------------|
+| **Tiny** | ~220K | 128 | 4 | Extreme Edge, IoT (Microcontrollers) |
+| **Small** | ~490K | 192 | 6 | Standard Mobile Devices |
+| **Base** | ~867K | 256 | 8 | High-End Mobile, Default Choice |
+| **Large**| **1.94M** | 384 | 12 | Server / Desktop (Best Accuracy) |
 
 ---
 
 ## 📦 Building Blocks
 
 ### GhostConv
-
 Efficient convolution using ghost features to reduce computation:
-
 ```python
 from src.blocks import GhostConv
-
 ghost = GhostConv(inp=64, oup=128, kernel_size=1, ratio=2)
 ```
 
-
 ### Coordinate Attention
-
 Position-aware channel attention mechanism:
-
 ```python
 from src.blocks import CoordAtt
-
 coord_att = CoordAtt(inp=64, oup=64, reduction=32)
 ```
 
-
 ### Linear Differential Attention
-
 The core attention mechanism:
-
 ```python
 from src.blocks import LinearDifferentialAttention
-
 lda = LinearDifferentialAttention(embed_dim=256, num_heads=8, dropout=0.1)
 ```
-
 
 ---
 
 ## 🔧 Training
 
 ### Data Preprocessing
-
 The preprocessing pipeline handles:
 - Dataset verification and corruption detection
 - Duplicate image detection using perceptual hashing
@@ -225,14 +229,11 @@ The preprocessing pipeline handles:
 - Class imbalance analysis
 
 Run the preprocessing notebook:
-
 ```bash
 jupyter notebook preprocessing/preprocessing_color.ipynb
 ```
 
-
 ### Training Pipeline
-
 The training notebook includes:
 - Data augmentation (rotation, flip, color jitter, perspective)
 - Mixed precision training (AMP)
@@ -242,7 +243,6 @@ The training notebook includes:
 - Comprehensive logging and visualization
 
 Key training configurations:
-
 ```python
 TRAINING_CONFIG = {
     'num_epochs': 50,
@@ -257,80 +257,57 @@ TRAINING_CONFIG = {
 }
 ```
 
-
 ---
 
-## 📈 Results
+## 🚀 Web Application (Coming Soon)
 
-### Performance Metrics
+A complete full-stack web application is currently under development to integrate this model into a real-world user interface. 
 
-| Metric | Value |
-|--------|-------|
-| Test Accuracy | 95%+ |
-| Top-3 Accuracy | 99%+ |
-| Top-5 Accuracy | 99.5%+ |
-| Parameters | <5M (all variants) |
-| Inference Time | <10ms/image (GPU) |
+- **Frontend**: React-based scanner for farmers to upload leaf images.
+- **Backend**: Node.js/Express server handling inference and user authentication.
+- **Live Demo**: `[Link to be added upon deployment]`
 
-### Comparison with Baseline
-
-| Model | Parameters | Accuracy | Size (MB) |
-|-------|------------|----------|-----------|
-| MobileNetV2 | 3.5M | ~96% | 13.5 |
-| **MobilePlantViT-Base** | 867K | ~95% | 3.3 |
-| **MobilePlantViT-Tiny** | 220K | ~93% | 0.9 |
-
----
-
-## 📤 Model Export
-
-The trained model can be exported in multiple formats:
-
-### PyTorch Checkpoint
-```python
-torch.save({
-    'model_state_dict': model.state_dict(),
-    'model_config': model.get_config(),
-}, 'model.pth')
-```
-
-
-### TorchScript
-```python
-traced_model = torch.jit.trace(model, sample_input)
-traced_model.save('model_traced.pt')
-```
-
-
-### ONNX
-```python
-torch.onnx.export(model, sample_input, 'model.onnx',
-                  input_names=['input'],
-                  output_names=['output'],
-                  dynamic_axes={'input': {0: 'batch_size'}})
-```
-
+*The project-interface folder will be pushed to this repository shortly after final tweaks and successful cloud deployment.*
 
 ---
 
 ## 🔬 Technical Details
 
 ### Attention Mechanism
-
 The Linear Differential Attention computes:
-
 1. Project input to Q₁, Q₂, K₁, K₂, V
 2. Compute attention scores: `A₁ = softmax(Q₁K₁ᵀ/√d)`, `A₂ = softmax(Q₂K₂ᵀ/√d)`
 3. Differential attention: `A_diff = α × (A₁ - A₂)`
 4. Apply to values: `output = A_diff × V`
 
 ### Parameter Efficiency
-
 The architecture achieves parameter efficiency through:
-- **GhostConv**: Generates features cheaply via depthwise operations
-- **Bottleneck FFN**: Contracts then expands (opposite of standard transformer)
-- **Single Transformer Block**: Minimal transformer overhead
-- **Efficient Projections**: Careful dimensionality choices
+- **GhostConv**: Generates features cheaply via depthwise operations.
+- **Bottleneck FFN**: Contracts then expands (opposite of standard transformer).
+- **Single Transformer Block**: Minimal transformer overhead.
+- **Efficient Projections**: Careful dimensionality choices.
+
+---
+
+## 📜 Citation
+
+If you find this code or our architecture useful in your research, please consider citing our paper:
+
+```bibtex
+@inproceedings{mobileplantvit_lda2026,
+  author = {M. Deepika and 
+            Vaishnavi Abbanaboina and 
+            Sangineedi Chaitanya Satya Balaji and 
+            Gangisetti Himasree and 
+            Astha Kumari and 
+            Sreeja Vaitla},
+  title = {MobilePlantViT-LDA: A Lightweight Hybrid CNN-Transformer Model for Plant Leaf Disease Detection},
+  booktitle = {Proceedings of the 6th International Conference on Computer Networks and Inventive Communication Technologies (ICCNCT)},
+  year = {2026},
+  publisher = {IEEE},
+  isbn = {979-8-3315-9019-2}
+}
+```
 
 ---
 
@@ -344,9 +321,11 @@ The architecture achieves parameter efficiency through:
 
 ---
 
-## 📄 License
+## 📄 License & Acknowledgements
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+* Licensed under the MIT License.
+* Dataset provided by [PlantVillage Dataset](https://www.kaggle.com/datasets/abdallahalidev/plantvillage-dataset). 
+* Inspired by innovations in EfficientNet, GhostNet, and DIFF Transformer frameworks.
 
 ---
 
@@ -362,6 +341,20 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
+## 👥 Contributors
+
+This project was collaboratively developed by the following contributors:
+
+| Name | GitHub |
+|---|---|
+| **Sangineedi Chaitanya Satya Balaji** | [@SCSBalaji](https://github.com/SCSBalaji) |
+| **Vaishnavi Abbanaboina** | [@username](https://github.com/vaishnavi-2105) |
+| **Gangisetti Himasree** | [@username](https://github.com/Celestia2006) |
+| **Astha Kumari** | [@username](https://github.com/Asthakumari009) |
+| **Sreeja Vaitla** | [@username](https://github.com/SreejaVaitla) |
+
+---
+
 ## 📧 Contact
 
 For questions or feedback, please open an issue on GitHub.
@@ -370,6 +363,6 @@ For questions or feedback, please open an issue on GitHub.
 
 ## ⭐ Acknowledgments
 
-- PlantVillage dataset for providing the plant disease images
-- The PyTorch team for the excellent deep learning framework
-- The research community for the foundational architectures and techniques
+- PlantVillage dataset for providing the plant disease images.
+- The PyTorch team for the excellent deep learning framework.
+- The research community for the foundational architectures and techniques.
